@@ -86,12 +86,6 @@
                 android:value="de.eidottermihi.rpicheck.activity.CustomCommandActivity"/>
         </activity>
 
-        <!-- FilePicker Library (without Intent Filter)-->
-        <activity
-            android:name="de.eidottermihi.rpicheck.activity.helper.RaspiFilePickerActivity"
-            android:label="@string/app_name"
-            android:theme="@style/FilePickerTheme">
-        </activity>
 
         <receiver android:name="de.eidottermihi.rpicheck.widget.OverclockingWidget"
             android:exported="true">

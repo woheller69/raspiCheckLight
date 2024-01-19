@@ -39,7 +39,6 @@ android {
 
 dependencies {
     implementation project(":ssh")
-    implementation "com.nononsenseapps:filepicker:4.2.1"
     implementation "io.freefair.android-colors:material:1.2.0"
     implementation "io.freefair.android-injection:injection:1.0.0-rc3"
     implementation "io.freefair.android-util:preference:1.1.1"

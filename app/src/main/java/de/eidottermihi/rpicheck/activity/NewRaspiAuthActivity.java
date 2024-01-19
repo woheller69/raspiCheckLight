@@ -142,42 +142,8 @@ public class NewRaspiAuthActivity extends AbstractFileChoosingActivity implement
         }
     }
 
-    public void onButtonClick(View view) {
-        switch (view.getId()) {
-            case R.id.buttonKeyfile:
-                startFileChooser();
-                break;
-            default:
-                break;
-        }
-    }
-
-    public void onCheckboxClick(View view) {
-        boolean checked = ((CheckBox) view).isChecked();
-        switch (view.getId()) {
-            case R.id.checkboxAsk:
-                switchCheckbox(checked);
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void switchCheckbox(boolean checked) {
-        LOGGER.debug("Always ask for passphrase: {}", checked);
-        if (checked) {
-            // don't show textfield for passphrase
-            keyPasswordLayout.setVisibility(View.GONE);
-        } else {
-            // show textfield for passphrase
-            keyPasswordLayout.setVisibility(View.VISIBLE);
-        }
-    }
-
 
     private void saveRaspi() {
-        // get auth method
-        final String selectedAuthMethod = RaspberryDeviceBean.SPINNER_AUTH_METHODS[spinnerAuth.getSelectedItemPosition()];
         final String sudoPass = editTextSudoPw.getText().toString().trim();
         final String sshPort = editTextSshPort.getText().toString().trim();
         boolean portOk = true;
@@ -187,38 +153,11 @@ public class NewRaspiAuthActivity extends AbstractFileChoosingActivity implement
         }
         if (portOk) {
             boolean saveSuccessful = false;
-            if (selectedAuthMethod.equals(RaspberryDeviceBean.SPINNER_AUTH_METHODS[0])) {
-                // ssh password (cannot be empty)
-                if (validator.checkNonOptionalTextField(editTextSshPass, getString(R.string.validation_msg_password))) {
-                    final String sshPass = editTextSshPass.getText().toString().trim();
-                    addRaspiToDb(name, host, user, selectedAuthMethod, sshPort, desc, sudoPass, sshPass, null, null);
-                    saveSuccessful = true;
-                }
-            } else if (selectedAuthMethod.equals(RaspberryDeviceBean.SPINNER_AUTH_METHODS[1])) {
-                // keyfile must be selected
-                if (keyfilePath != null && new File(keyfilePath).exists()) {
-                    addRaspiToDb(name, host, user, selectedAuthMethod, sshPort, desc, sudoPass, null, null, keyfilePath);
-                    saveSuccessful = true;
-                } else {
-                    buttonKeyfile.setError(getString(R.string.validation_msg_keyfile));
-                }
-            } else if (selectedAuthMethod.equals(RaspberryDeviceBean.SPINNER_AUTH_METHODS[2])) {
-                // keyfile must be selected
-                if (keyfilePath != null && new File(keyfilePath).exists()) {
-                    if (checkboxAskPassphrase.isChecked()) {
-                        addRaspiToDb(name, host, user, selectedAuthMethod, sshPort, desc, sudoPass, null, null, keyfilePath);
-                        saveSuccessful = true;
-                    } else {
-                        // password must be set
-                        if (validator.checkNonOptionalTextField(editTextKeyfilePass, getString(R.string.validation_msg_key_passphrase))) {
-                            final String keyfilePass = editTextKeyfilePass.getText().toString().trim();
-                            addRaspiToDb(name, host, user, selectedAuthMethod, sshPort, desc, sudoPass, null, keyfilePass, keyfilePath);
-                            saveSuccessful = true;
-                        }
-                    }
-                } else {
-                    buttonKeyfile.setError(getString(R.string.validation_msg_keyfile));
-                }
+            // ssh password (cannot be empty)
+            if (validator.checkNonOptionalTextField(editTextSshPass, getString(R.string.validation_msg_password))) {
+                final String sshPass = editTextSshPass.getText().toString().trim();
+                addRaspiToDb(name, host, user, "AUTH_PASSWORD", sshPort, desc, sudoPass, sshPass, null, null);
+                saveSuccessful = true;
             }
             if (saveSuccessful) {
                 Toast.makeText(this, R.string.new_pi_created, Toast.LENGTH_SHORT).show();

@@ -24,7 +24,6 @@
 package de.eidottermihi.rpicheck.activity.helper;
 
 import android.content.Context;
-import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.common.base.Strings;
@@ -61,8 +60,6 @@ public class Validation {
     /**
      * Validates if user input is valid.
      *
-     * @param authMethod 0 = ssh password, 1 = private key, 2 = private key with
-     *                   passphrase
      * @param name
      * @param host
      * @param user
@@ -71,10 +68,8 @@ public class Validation {
      * @param sudoPass
      * @return true, if input is valid
      */
-    public boolean validatePiEditData(Context context, int authMethod,
-                                      EditText name, EditText host, EditText user, EditText password,
-                                      EditText port, EditText sudoPass, EditText keyPassphrase,
-                                      Button keyChooser, boolean alwaysAskChecked, String keyfilePath) {
+    public boolean validatePiEditData(Context context, EditText name, EditText host, EditText user, EditText password,
+                                      EditText port, EditText sudoPass) {
         boolean dataValid = true;
         // check non-optional fields
         if (!checkNonOptionalTextField(name,
@@ -93,35 +88,11 @@ public class Validation {
             dataValid = false;
         }
         // check auth method
-        if (authMethod == 0) {
             // ssh password must be present
             if (!checkNonOptionalTextField(password,
                     context.getString(R.string.validation_msg_password))) {
                 dataValid = false;
             }
-        } else if (authMethod == 1) {
-            // a keyfile must be present
-            if (Strings.isNullOrEmpty(keyfilePath)) {
-                keyChooser.setError(context
-                        .getString(R.string.validation_msg_keyfile));
-                dataValid = false;
-            }
-        } else if (authMethod == 2) {
-            // keyfile must be present
-            if (Strings.isNullOrEmpty(keyfilePath)) {
-                keyChooser.setError(context
-                        .getString(R.string.validation_msg_keyfile));
-                dataValid = false;
-            }
-            // if always asked is unchecked, passphrase must be present
-            if (!alwaysAskChecked) {
-                if (!checkNonOptionalTextField(
-                        keyPassphrase,
-                        context.getString(R.string.validation_msg_key_passphrase))) {
-                    dataValid = false;
-                }
-            }
-        }
         return dataValid;
     }
 

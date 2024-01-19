@@ -77,20 +77,8 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
     @InjectView(R.id.edit_raspi_sudoPass_editText)
     private EditText editTextSudoPass;
 
-    @InjectView(R.id.spinnerAuthMethod)
-    private Spinner spinnerAuth;
     @InjectView(R.id.ssh_password_layout)
     private TextInputLayout sshPasswordLayout;
-    @InjectView(R.id.rel_key)
-    private RelativeLayout relLayKeyfile;
-    @InjectView(R.id.key_password_layout)
-    private TextInputLayout keyPasswordLayout;
-    @InjectView(R.id.key_password_edit_text)
-    private EditText keyPasswordEditText;
-    @InjectView(R.id.buttonKeyfile)
-    private Button buttonKeyfile;
-    @InjectView(R.id.checkboxAsk)
-    private CheckBox checkboxAskPassphrase;
 
 
     private DeviceDbHelper deviceDb;
@@ -112,20 +100,6 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
         int deviceId = this.getIntent().getExtras().getInt(Constants.EXTRA_DEVICE_ID);
         deviceBean = deviceDb.read(deviceId);
 
-        // init auth spinner
-        final ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.auth_methods, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        // Apply the adapter to the spinner
-        spinnerAuth.setAdapter(adapter);
-        spinnerAuth.setOnItemSelectedListener(this);
-        if (deviceBean.getAuthMethod().equals(RaspberryDeviceBean.AUTH_PASSWORD)) {
-            spinnerAuth.setSelection(0);
-        } else if (deviceBean.getAuthMethod().equals(RaspberryDeviceBean.AUTH_PUBLIC_KEY)) {
-            spinnerAuth.setSelection(1);
-        } else {
-            spinnerAuth.setSelection(2);
-        }
-        // fill fields according to data from device bean
         fillFromBean();
     }
 
@@ -164,45 +138,9 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
         }
     }
 
-    public void onButtonClick(View view) {
-        switch (view.getId()) {
-            case R.id.buttonKeyfile:
-                startFileChooser();
-                break;
-        }
-    }
-
-    public void onCheckboxClick(View view) {
-        boolean checked = ((CheckBox) view).isChecked();
-        switch (view.getId()) {
-            case R.id.checkboxAsk:
-                switchCheckbox(checked);
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void switchCheckbox(boolean checked) {
-        LOGGER.debug("Always ask for passphrase: {}", checked);
-        if (checked) {
-            // don't show textfield for passphrase
-            keyPasswordLayout.setVisibility(View.GONE);
-            // remove passphrase from textfield
-            keyPasswordEditText.setText("");
-        } else {
-            // show textfield for passphrase
-            keyPasswordLayout.setVisibility(View.VISIBLE);
-            keyPasswordEditText.setVisibility(View.VISIBLE);
-        }
-    }
-
     private void updateRaspi() {
-        final int authMethod = spinnerAuth.getSelectedItemPosition();
-        boolean validationSuccessful = validator.validatePiEditData(this, authMethod, editTextName, editTextHost, editTextUser,
-                editTextPass, editTextSshPortOpt, editTextSudoPass,
-                keyPasswordEditText, buttonKeyfile,
-                checkboxAskPassphrase.isChecked(), deviceBean.getKeyfilePath());
+        boolean validationSuccessful = validator.validatePiEditData(this, editTextName, editTextHost, editTextUser,
+                editTextPass, editTextSshPortOpt, editTextSudoPass);
         if (validationSuccessful) {
             // getting credentials from textfields
             final String name = editTextName.getText().toString().trim();
@@ -211,29 +149,12 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
             final String sshPort = editTextSshPortOpt.getText().toString().trim();
             final String sudoPass = editTextSudoPass.getText().toString().trim();
             final String description = editTextDescription.getText().toString().trim();
-            if (authMethod == 0) {
-                final String pass = editTextPass.getText().toString().trim();
+
+            final String pass = editTextPass.getText().toString().trim();
                 updateRaspiInDb(name, host, user, pass, sshPort, description, sudoPass,
-                        RaspberryDeviceBean.SPINNER_AUTH_METHODS[authMethod],
+                        RaspberryDeviceBean.SPINNER_AUTH_METHODS[0],
                         null, null);
-            } else if (authMethod == 1) {
-                final String keyfilePath = deviceBean.getKeyfilePath();
-                updateRaspiInDb(name, host, user, null, sshPort, description, sudoPass,
-                        RaspberryDeviceBean.SPINNER_AUTH_METHODS[authMethod],
-                        keyfilePath, null);
-            } else if (authMethod == 2) {
-                final String keyfilePath = deviceBean.getKeyfilePath();
-                if (checkboxAskPassphrase.isChecked()) {
-                    updateRaspiInDb(name, host, user, null, sshPort, description, sudoPass,
-                            RaspberryDeviceBean.SPINNER_AUTH_METHODS[authMethod],
-                            keyfilePath, null);
-                } else {
-                    final String keyfilePass = keyPasswordEditText.getText().toString().trim();
-                    updateRaspiInDb(name, host, user, null, sshPort, description,
-                            sudoPass, RaspberryDeviceBean.SPINNER_AUTH_METHODS[authMethod],
-                            keyfilePath, keyfilePass);
-                }
-            }
+
             Toast.makeText(this, R.string.update_successful, Toast.LENGTH_SHORT).show();
             // back to main
             this.setResult(RESULT_OK);
@@ -271,38 +192,6 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
             // show only ssh password
             sshPasswordLayout.setVisibility(View.VISIBLE);
             editTextPass.setText(deviceBean.getPass());
-            relLayKeyfile.setVisibility(View.GONE);
-        } else if (method.equals(RaspberryDeviceBean.AUTH_PUBLIC_KEY)) {
-            // show key file button (no passphrase)
-            sshPasswordLayout.setVisibility(View.GONE);
-            relLayKeyfile.setVisibility(View.VISIBLE);
-            initButtonKeyfile();
-            checkboxAskPassphrase.setVisibility(View.GONE);
-            keyPasswordLayout.setVisibility(View.GONE);
-        } else {
-            // show key file button and passphrase field
-            sshPasswordLayout.setVisibility(View.GONE);
-            relLayKeyfile.setVisibility(View.VISIBLE);
-            initButtonKeyfile();
-            checkboxAskPassphrase.setVisibility(View.VISIBLE);
-            if (deviceBean.getKeyfilePass() != null) {
-                keyPasswordLayout.setVisibility(View.VISIBLE);
-                checkboxAskPassphrase.setChecked(false);
-                keyPasswordEditText.setText(deviceBean.getKeyfilePass());
-            } else if (!Strings.isNullOrEmpty(keyPasswordEditText.getText()
-                    .toString())) {
-                keyPasswordLayout.setVisibility(View.VISIBLE);
-                checkboxAskPassphrase.setChecked(false);
-            } else {
-                keyPasswordLayout.setVisibility(View.GONE);
-                checkboxAskPassphrase.setChecked(true);
-            }
-        }
-    }
-
-    private void initButtonKeyfile() {
-        if (deviceBean.getKeyfilePath() != null) {
-            buttonKeyfile.setText(getFilenameFromPath(deviceBean.getKeyfilePath()));
         }
     }
 
@@ -320,15 +209,4 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
 
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE_LOAD_FILE && resultCode == Activity.RESULT_OK) {
-            final String filePath = data.getData().getPath();
-            LOGGER.debug("Path of selected keyfile: {}", filePath);
-            deviceBean.setKeyfilePath(filePath);
-            // set text to filename, not full path
-            final String fileName = getFilenameFromPath(filePath);
-            buttonKeyfile.setText(fileName);
-        }
-    }
 }
