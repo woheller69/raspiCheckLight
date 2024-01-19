@@ -196,8 +196,8 @@ public class MainActivity extends InjectionAppCompatActivity implements
             @Override
             protected void onPostExecute(Void r) {
                 if (deviceCursor.getCount() == 0) {
-                    Intent newRaspiIntent = new Intent(MainActivity.this, NewRaspiActivity.class);
-                    startActivityForResult(newRaspiIntent, NewRaspiActivity.REQUEST_SAVE);
+                    Intent newRaspiIntent = new Intent(MainActivity.this, EditRaspiActivity.class);
+                    startActivityForResult(newRaspiIntent, EditRaspiActivity.REQUEST_EDIT);
                 } else {
                     // init spinner
                     initSpinner();
@@ -914,11 +914,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
                 // refresh options menu
                 supportInvalidateOptionsMenu();
                 // if current device == null (if only device was deleted), start new raspi activity
-                if (currentDevice == null) {
-                    Toast.makeText(MainActivity.this, R.string.please_add_a_raspberry_pi, Toast.LENGTH_LONG).show();
-                    Intent newRaspiIntent = new Intent(MainActivity.this, NewRaspiActivity.class);
-                    startActivity(newRaspiIntent);
-                }
             }
         }.execute(itemId);
         return true;
@@ -1030,9 +1025,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
     protected void onActivityResult(int requestCode, int resultCode,
                                     Intent intent) {
         switch (requestCode) {
-            case NewRaspiActivity.REQUEST_SAVE:
-                initSpinner();
-                break;
             case EditRaspiActivity.REQUEST_EDIT:
                 initSpinner();
                 break;
