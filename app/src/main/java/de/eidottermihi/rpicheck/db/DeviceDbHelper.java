@@ -30,9 +30,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Calendar;
 
 import de.eidottermihi.rpicheck.activity.helper.CursorHelper;
@@ -42,8 +39,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
      * Current database version.
      */
     private static final int DATABASE_VERSION = 10;
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(DeviceDbHelper.class);
     private static final String DATABASE_NAME = "RASPIQUERY";
     private static final String DEVICES_TABLE_NAME = "DEVICES";
     private static final String QUERIES_TABLE_NAME = "QUERIES";
@@ -116,7 +111,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        LOGGER.info("Executing first-time database setup.");
         db.execSQL(DEVICE_TABLE_CREATE);
         db.execSQL(QUERY_TABLE_CREATE);
         db.execSQL(COMMAND_TABLE_CREATE);
@@ -175,7 +169,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
         values.put(COLUMN_CREATED_AT, timestamp);
         values.put(COLUMN_MODIFIED_AT, timestamp);
         long id = db.insert(DEVICES_TABLE_NAME, null, values);
-        LOGGER.debug("Inserted new device[id={}].", id);
         return read(id);
     }
 
@@ -186,7 +179,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
      * @return a {@link RaspberryDeviceBean}
      */
     public RaspberryDeviceBean read(long id) {
-        LOGGER.trace("Reading device with id = " + id);
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.query(DEVICES_TABLE_NAME, new String[]{COLUMN_ID, COLUMN_NAME,
                         COLUMN_DESCRIPTION, COLUMN_HOST, COLUMN_USER, COLUMN_PASSWD,
@@ -203,7 +195,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
         } else {
             cursor.close();
             db.close();
-            LOGGER.warn("Device with id = {} is not in db.", id);
             return null;
         }
     }
@@ -220,9 +211,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
                 + " = ?", new String[]{idString});
         int deviceRows = db.delete(DEVICES_TABLE_NAME, COLUMN_ID + " = ?",
                 new String[]{idString});
-        LOGGER.info("Delete device with id=" + idString + ": " + deviceRows
-                + "device row(s) deleted, " + queryRows
-                + " query data row(s) deleted.");
         db.close();
     }
 
@@ -233,7 +221,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
      * @return the updated device
      */
     public RaspberryDeviceBean update(RaspberryDeviceBean device) {
-        LOGGER.trace("Updating device with id=" + device.getId() + "...");
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME, device.getName());
@@ -254,13 +241,10 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
         int rowsUpdate = db.update(DEVICES_TABLE_NAME, values, COLUMN_ID
                 + " = ?", new String[]{device.getId() + ""});
         db.close();
-        LOGGER.trace(rowsUpdate + " row afflicted from update.");
         return read(device.getId());
     }
 
     public CommandBean create(CommandBean command) {
-        LOGGER.info("Writing new command[name={}] to database.",
-                command.getName());
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         // _id AUTOINCREMENT
@@ -281,8 +265,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
                 COLUMN_ID + "=" + id, null, null, null, COLUMN_ID);
         if (cursor.moveToFirst()) {
             bean = CursorHelper.readCommand(cursor);
-        } else {
-            LOGGER.info("No command with id={} found.", id);
         }
         cursor.close();
         db.close();
@@ -290,7 +272,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
     }
 
     public CommandBean updateCommand(CommandBean command) {
-        LOGGER.debug("Updating command id {}.", command.getId());
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_CMD_NAME, command.getName());
@@ -300,7 +281,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
         int rowsUpdate = db.update(COMMANDS_TABLE_NAME, values, COLUMN_ID
                 + " = ?", new String[]{command.getId() + ""});
         db.close();
-        LOGGER.debug(rowsUpdate + " row afflicted from update.");
         return readCommand(command.getId());
     }
 
@@ -309,8 +289,6 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         int deviceRows = db.delete(COMMANDS_TABLE_NAME, COLUMN_ID + " = ?",
                 new String[]{idString});
-        LOGGER.info("Deleted command with id=" + idString + ": " + deviceRows
-                + "command row(s) deleted.");
         db.close();
         return deviceRows > 0;
 
@@ -320,16 +298,10 @@ public class DeviceDbHelper extends SQLiteOpenHelper {
      * Deletes all device data and query data from the database.
      */
     public void wipeAllData() {
-        LOGGER.info("Wiping all device information....");
         SQLiteDatabase db = this.getWritableDatabase();
         int rowsQueries = db.delete(QUERIES_TABLE_NAME, "1", null);
-        LOGGER.info("Deleted " + rowsQueries
-                + " device query data from database.");
         int rowsDevices = db.delete(DEVICES_TABLE_NAME, "1", null);
-        LOGGER.info("Deleted " + rowsDevices + " devices from database.");
         int commands = db.delete(COMMANDS_TABLE_NAME, null, null);
-        LOGGER.info("Deleted " + commands + " commands from database.");
-        LOGGER.info("Wipe successful.");
         db.close();
     }
 

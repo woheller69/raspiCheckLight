@@ -31,7 +31,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.TextInputLayout;
+import com.google.android.material.textfield.TextInputLayout;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -44,11 +44,8 @@ import android.widget.Toast;
 
 import com.google.common.base.Strings;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.eidottermihi.raspicheck.R;
-import de.eidottermihi.rpicheck.activity.helper.LoggingHelper;
 import de.eidottermihi.rpicheck.adapter.DeviceSpinnerAdapter;
 import de.eidottermihi.rpicheck.db.DeviceDbHelper;
 import de.eidottermihi.rpicheck.db.RaspberryDeviceBean;
@@ -70,7 +67,6 @@ public class OverclockingWidgetConfigureActivity extends InjectionAppCompatActiv
     public static final String PREF_SHOW_ARM_SUFFIX = "_arm";
     public static final String PREF_SHOW_LOAD_SUFFIX = "_load";
     public static final String PREF_SHOW_MEMORY_SUFFIX = "_memory";
-    private static final Logger LOGGER = LoggerFactory.getLogger(OverclockingWidgetConfigureActivity.class);
     private static final String PREFS_NAME = "de.eidottermihi.rpicheck.widget.OverclockingWidget";
     private static final String PREF_PREFIX_KEY = "appwidget_";
     private static final String PREF_UPDATE_ONLY_ON_WIFI = "_onlywifi";
@@ -121,8 +117,6 @@ public class OverclockingWidgetConfigureActivity extends InjectionAppCompatActiv
      */
     static void saveChosenDevicePref(Context context, int appWidgetId, Long deviceId, int updateInterval, boolean onlyOnWifi,
                                      boolean showTemp, boolean showArm, boolean showLoad, boolean showMemory) {
-        LOGGER.info("Saving new OverclockingWidget. Settings - Update interval: {} - Only on Wifi: {}" +
-                " - TEMP: {} - ARM: {} - LOAD: {} - RAM: {}", updateInterval, onlyOnWifi, showTemp, showArm, showLoad, showMemory);
         SharedPreferences.Editor prefs = context.getSharedPreferences(PREFS_NAME, 0).edit();
         prefs.putLong(PREF_PREFIX_KEY + appWidgetId, deviceId);
         prefs.putInt(prefKey(PREF_UPDATE_INTERVAL_SUFFIX, appWidgetId), updateInterval);
@@ -185,7 +179,6 @@ public class OverclockingWidgetConfigureActivity extends InjectionAppCompatActiv
     }
 
     static void settingScheduledAlarm(Context context, int appWidgetId) {
-        LOGGER.debug("Check if Widget[ID={}] needs a new Alarm.", appWidgetId);
         if (isInitiated(appWidgetId, context)) {
             int updateIntervalInMinutes = OverclockingWidgetConfigureActivity.loadUpdateInterval(context, appWidgetId);
             if (updateIntervalInMinutes > 0) {
@@ -194,18 +187,14 @@ public class OverclockingWidgetConfigureActivity extends InjectionAppCompatActiv
                 AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 PendingIntent pintent = getServicePendingIntent(context, appWidgetId, getPendingIntentUri(appWidgetId), ACTION_WIDGET_UPDATE_ONE);
                 alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + updateIntervalMillis, updateIntervalMillis, pintent);
-                LOGGER.debug("Added alarm for periodic updates of Widget[ID={}], update interval: {} ms.", appWidgetId, updateIntervalMillis);
             } else {
-                LOGGER.debug("No periodic updates for Widget[ID={}].", appWidgetId);
             }
         } else {
-            LOGGER.debug("Widget[ID={}] not fully initiated, no alarm needed.", appWidgetId);
         }
     }
 
 
     public static void removeAlarm(Context c, int appWidgetId) {
-        LOGGER.debug("Removing alarm for Widget[ID={}].", appWidgetId);
         final Uri intentUri = getPendingIntentUri(appWidgetId);
         final PendingIntent pendingIntent = getServicePendingIntent(c, appWidgetId, intentUri, ACTION_WIDGET_UPDATE_ONE);
         final AlarmManager alarmManager = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
@@ -229,7 +218,6 @@ public class OverclockingWidgetConfigureActivity extends InjectionAppCompatActiv
         super.onCreate(icicle);
 
         // init logging
-        LoggingHelper.initLogging(OverclockingWidgetConfigureActivity.this);
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
@@ -290,7 +278,6 @@ public class OverclockingWidgetConfigureActivity extends InjectionAppCompatActiv
                 final Context context = OverclockingWidgetConfigureActivity.this;
 
                 long selectedItemId = widgetPiSpinner.getSelectedItemId();
-                LOGGER.info("Selected Device - Item ID = {}", selectedItemId);
                 RaspberryDeviceBean deviceBean = deviceDbHelper.read(selectedItemId);
                 if (deviceBean.usesAuthentificationMethod(RaspberryDeviceBean.AUTH_PUBLIC_KEY_WITH_PASSWORD) && deviceBean.getKeyfilePass() == null) {
                     Toast.makeText(context, getString(R.string.widget_key_pass_error), Toast.LENGTH_LONG).show();
@@ -341,14 +328,12 @@ public class OverclockingWidgetConfigureActivity extends InjectionAppCompatActiv
         final int updateId = widgetUpdateSpinner.getId();
         final int updateIntervalId = widgetUpdateIntervalSpinner.getId();
         if (parent.getId() == updateId) {
-            LOGGER.debug("Update-Spinner: Item pos {}, id {} selected.", position, id);
             if (autoUpdate[position].equals(UPDATE_NO)) {
                 linLayoutUpdateInterval.setVisibility(View.GONE);
             } else {
                 linLayoutUpdateInterval.setVisibility(View.VISIBLE);
             }
         } else if (parent.getId() == updateIntervalId) {
-            LOGGER.debug("Interval-Spinner: Item pos {}, id {} selected.", position, id);
             int updateIntervalInMinutes = updateIntervalsMinutes[position];
             if (updateIntervalInMinutes == -1) {
                 // custom time interval

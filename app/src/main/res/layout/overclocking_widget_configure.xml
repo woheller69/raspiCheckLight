@@ -123,7 +123,7 @@
                 android:padding="@dimen/padding_small"
                 />
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/linLayoutCustomUpdateInterval"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -136,7 +136,7 @@
                     android:text="@string/default_update_interval"
                     android:hint="@string/widget_update_interval_custom_text"
                     />
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
 

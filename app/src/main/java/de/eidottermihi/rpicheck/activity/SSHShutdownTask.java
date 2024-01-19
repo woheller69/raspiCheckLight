@@ -25,9 +25,6 @@ package de.eidottermihi.rpicheck.activity;
 
 import android.os.AsyncTask;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 
 import de.eidottermihi.rpicheck.activity.helper.Constants;
@@ -40,9 +37,6 @@ import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
  * @author Michael
  */
 public class SSHShutdownTask extends AsyncTask<String, Integer, ShutdownResult> {
-
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(SSHShutdownTask.class);
 
     private IQueryService queryService;
 
@@ -88,14 +82,12 @@ public class SSHShutdownTask extends AsyncTask<String, Integer, ShutdownResult> 
             }
             return result;
         } catch (RaspiQueryException e) {
-            LOGGER.error(e.getMessage(), e);
             result.setExcpetion(e);
             return result;
         } finally {
             try {
                 queryService.disconnect();
             } catch (RaspiQueryException e) {
-                LOGGER.debug("Error closing the ssh client.", e);
             }
         }
     }

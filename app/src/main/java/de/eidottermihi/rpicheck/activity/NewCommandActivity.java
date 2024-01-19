@@ -30,9 +30,6 @@ import android.widget.EditText;
 
 import com.google.common.base.Strings;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.eidottermihi.raspicheck.R;
 import de.eidottermihi.rpicheck.activity.helper.Validation;
 import de.eidottermihi.rpicheck.db.CommandBean;
@@ -45,7 +42,6 @@ import io.freefair.android.injection.app.InjectionAppCompatActivity;
 @XmlLayout(R.layout.activity_command_new)
 @XmlMenu(R.menu.activity_command_new)
 public class NewCommandActivity extends InjectionAppCompatActivity {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NewCommandActivity.class);
 
     // Requestcode for new command
     public static final int REQUEST_NEW = 0;
@@ -100,7 +96,6 @@ public class NewCommandActivity extends InjectionAppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                LOGGER.info("Cancelling new/edit command activity.");
                 this.setResult(RESULT_CANCELED);
                 this.finish();
                 return true;

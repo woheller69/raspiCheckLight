@@ -35,11 +35,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.NavUtils;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.CursorAdapter;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.core.app.NavUtils;
+import androidx.core.content.ContextCompat;
+import androidx.cursoradapter.widget.CursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -52,9 +52,6 @@ import android.widget.Toast;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -84,7 +81,6 @@ import io.freefair.android.injection.app.InjectionAppCompatActivity;
 @XmlLayout(R.layout.activity_commands)
 @XmlMenu(R.menu.activity_commands)
 public class CustomCommandActivity extends InjectionAppCompatActivity implements OnItemClickListener, PassphraseDialogListener, PlaceholdersDialogListener {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CustomCommandActivity.class);
     private static final int REQUEST_READ_PERMISSION_FOR_COMMAND = 1;
 
     private RaspberryDeviceBean currentDevice;
@@ -110,19 +106,14 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         Bundle extras = this.getIntent().getExtras();
         if (extras != null && extras.get("pi") != null) {
-            LOGGER.debug("onCreate: get currentDevice out of intent.");
             currentDevice = (RaspberryDeviceBean) extras.get("pi");
         } else if (savedInstanceState.getSerializable("pi") != null) {
-            LOGGER.debug("onCreate: get currentDevice out of savedInstanceState.");
             currentDevice = (RaspberryDeviceBean) savedInstanceState.getSerializable("pi");
         }
         if (currentDevice != null) {
-            LOGGER.debug("Setting activity title for device.");
             getSupportActionBar().setTitle(currentDevice.getName());
-            LOGGER.debug("Initializing ListView");
             this.initListView(currentDevice);
         } else {
-            LOGGER.debug("No current device! Setting no title");
         }
 
     }
@@ -157,7 +148,6 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
                                     ContextMenuInfo menuInfo) {
         if (v.getId() == R.id.commandListView) {
             final AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-            LOGGER.debug("Creating context menu for command id = {}.", info.id);
             CommandBean cmd = deviceDb.readCommand(info.id);
             menu.setHeaderTitle(cmd.getName());
             menu.add(Menu.NONE, 1, 1, R.string.command_context_edit);
@@ -194,7 +184,6 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
     @Override
     public boolean onContextItemSelected(android.view.MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        LOGGER.debug("Context item selected for command id {}.", info.id);
         int menuItemIndex = item.getItemId();
         switch (menuItemIndex) {
             case 1:
@@ -248,14 +237,12 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (currentDevice != null) {
-            LOGGER.debug("Writing currentDevice in outState.");
             outState.putSerializable("pi", currentDevice);
         }
     }
 
     @Override
     public void onItemClick(AdapterView<?> arg0, View arg1, int itemPos, long itemId) {
-        LOGGER.debug("Command pos {} clicked. Item _id = {}.", itemPos, itemId);
         runCommand(itemId);
     }
 
@@ -269,7 +256,6 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
                 // need permission to read keyfile
                 final String keyfilePath = currentDevice.getKeyfilePath();
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    LOGGER.debug("Requesting permission to read private key file from storage...");
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                             REQUEST_READ_PERMISSION_FOR_COMMAND);
                     return;
@@ -277,7 +263,6 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
                 if (currentDevice.usesAuthentificationMethod(RaspberryDeviceBean.AUTH_PUBLIC_KEY_WITH_PASSWORD)
                         && Strings.isNullOrEmpty(currentDevice.getKeyfilePass())) {
                     // must ask for key passphrase first
-                    LOGGER.debug("Asking for key passphrase.");
                     // dirty hack, saving commandId as "dialog type"
                     final String dialogType = commandId + "";
                     final DialogFragment passphraseDialog = new PassphraseDialog();
@@ -289,7 +274,6 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
                     return;
                 }
             }
-            LOGGER.debug("Opening command dialog.");
             openCommandDialog(commandId, currentDevice.getKeyfilePass());
         } else {
             Toast.makeText(this, R.string.no_connection, Toast.LENGTH_SHORT).show();
@@ -298,6 +282,7 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_READ_PERMISSION_FOR_COMMAND:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -317,7 +302,6 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-        LOGGER.debug("onPause() - saving lastCommandId={}", commandId);
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPreferences.edit().putLong("lastCommandId", commandId).apply();
     }
@@ -325,11 +309,9 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        LOGGER.debug("onResume() - retrieving lastCommandId.");
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         final long lastCommandId = sharedPreferences.getLong("lastCommandId", -1L);
         if (lastCommandId != -1L) {
-            LOGGER.debug("lastCommandId={}", lastCommandId);
             this.commandId = lastCommandId;
         }
     }
@@ -388,7 +370,6 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
         while (m.find()) {
             String placeholder = m.group();
             String placeholderValue = placeholder.substring(2, placeholder.length() - 1);
-            LOGGER.debug("Found non-prompting placeholder for: {}", placeholderValue);
             if (placeholderValue.startsWith("pi.")) {
                 // accessing properties of current pi device
                 List<String> splitToList = Splitter.on('.').splitToList(placeholderValue);
@@ -396,23 +377,18 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
                     String accessor = splitToList.get(1);
                     String value = getValueViaReflection(currentDevice, accessor);
                     if (value != null) {
-                        LOGGER.debug("Value for '{}' is '{}'", placeholder, value);
                         nonPromptingPlaceholders.put(placeholder, value);
                     }
                 } else {
-                    LOGGER.debug("Skipping bad placeholder definition: {}", placeholder);
                 }
             } else if (placeholderValue.startsWith("date(")) {
                 // parse format in braces
                 final String format = placeholderValue.substring(5, placeholderValue.length() - 1);
-                LOGGER.debug("Trying to get system time with format '{}'...", format);
                 try {
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
                     String value = simpleDateFormat.format(new Date());
-                    LOGGER.debug("Value for '{}' is '{}'", placeholder, value);
                     nonPromptingPlaceholders.put(placeholder, value);
                 } catch (IllegalArgumentException e) {
-                    LOGGER.warn("Unparseable Date Format: {} - refer to Java's SimpleDateFormat for a valid format specification.", format);
                 }
             }
         }
@@ -420,9 +396,7 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
     }
 
     private String getValueViaReflection(RaspberryDeviceBean device, String accessor) {
-        LOGGER.debug("Searching annotated Getter for accessor: {}", accessor);
         for (Method method : device.getClass().getMethods()) {
-            LOGGER.debug("Checking method: {}", method.getName());
             if (method.isAnnotationPresent(Exported.class)) {
                 if (method.getName().replaceFirst("get", "").toLowerCase().equals(accessor.toLowerCase())) {
                     try {
@@ -431,12 +405,10 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
                             return result.toString();
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Couldn't invoke method {} on DeviceBean: {}", method.getName(), e);
                     }
                 }
             }
         }
-        LOGGER.debug("No getter found on DeviceBean. Property is not present.");
         return null;
     }
 
@@ -452,9 +424,7 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
 
     @Override
     public void onPassphraseOKClick(DialogFragment dialog, String passphrase, boolean savePassphrase, String type) {
-        LOGGER.debug("Key passphrase entered.");
         if (savePassphrase) {
-            LOGGER.debug("Saving passphrase..");
             currentDevice.setKeyfilePass(passphrase);
             currentDevice.setModifiedAt(new Date());
             new Thread() {
@@ -466,7 +436,6 @@ public class CustomCommandActivity extends InjectionAppCompatActivity implements
         }
         // dirty hack: type is commandId
         Long commandId = Long.parseLong(type);
-        LOGGER.debug("Starting command dialog for command id " + commandId);
         openCommandDialog(commandId, passphrase);
     }
 

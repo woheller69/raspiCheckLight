@@ -36,12 +36,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBar;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.ActionBar;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -57,9 +56,6 @@ import android.widget.Toast;
 
 import com.google.common.base.Strings;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -69,11 +65,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import de.eidottermihi.raspicheck.BuildConfig;
 import de.eidottermihi.raspicheck.R;
 import de.eidottermihi.rpicheck.activity.helper.Constants;
 import de.eidottermihi.rpicheck.activity.helper.FormatHelper;
-import de.eidottermihi.rpicheck.activity.helper.LoggingHelper;
 import de.eidottermihi.rpicheck.adapter.DeviceSpinnerAdapter;
 import de.eidottermihi.rpicheck.beans.QueryBean;
 import de.eidottermihi.rpicheck.beans.ShutdownResult;
@@ -95,14 +91,12 @@ import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
 import io.freefair.android.injection.annotation.InjectView;
 import io.freefair.android.injection.annotation.XmlLayout;
 import io.freefair.android.injection.app.InjectionAppCompatActivity;
-import sheetrock.panda.changelog.ChangeLog;
 
 @XmlLayout(R.layout.activity_main)
 public class MainActivity extends InjectionAppCompatActivity implements
         ActionBar.OnNavigationListener,
         ShutdownDialogListener, PassphraseDialogListener, AsyncQueryDataUpdate,
         AsyncShutdownUpdate {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MainActivity.class);
 
     private static final String CURRENT_DEVICE = "currentDevice";
     private static final String ALL_DEVICES = "allDevices";
@@ -173,16 +167,8 @@ public class MainActivity extends InjectionAppCompatActivity implements
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        LoggingHelper.initLogging(this);
-
         // assigning refreshable root scrollview
         initSwipeRefreshLayout();
-
-        // Changelog
-        final ChangeLog changeLog = new ChangeLog(this);
-        if (changeLog.firstRun()) {
-            changeLog.getLogDialog().show();
-        }
 
         // init device database
         deviceDb = new DeviceDbHelper(this);
@@ -210,7 +196,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                LOGGER.trace("Query initiated by PullToRefresh.");
                 doQuery(true);
             }
         });
@@ -323,7 +308,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
     private void handleQueryError(List<String> errorMessages) {
         final ArrayList<String> messages = new ArrayList<>(errorMessages);
         if (errorMessages.size() > 0 && !isOnBackground) {
-            LOGGER.debug("Showing query error messages.");
             Bundle args = new Bundle();
             args.putStringArrayList(QueryErrorMessagesDialog.KEY_ERROR_MESSAGES, messages);
             final QueryErrorMessagesDialog messageDialog = new QueryErrorMessagesDialog();
@@ -422,7 +406,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
             @Override
             protected Void doInBackground(Void... params) {
                 deviceCursor = deviceDb.getFullDeviceCursor();
-                LOGGER.debug("Device cursor rows: " + deviceCursor.getCount());
                 return null;
             }
 
@@ -463,7 +446,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
         final String errorMessage = this.mapExceptionToErrorMessage(exception);
         // only show dialog when app is not in background
         if (!isOnBackground) {
-            LOGGER.debug("Query caused exception. Showing dialog.");
             // build dialog
             Bundle dialogArgs = new Bundle();
             dialogArgs.putString(QueryExceptionDialog.MESSAGE_KEY, errorMessage);
@@ -547,7 +529,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
     }
 
     private void shareQueryData() {
-        LOGGER.debug("Create sharing intent for current query data.");
         final Intent sharingIntent = new Intent(Intent.ACTION_SEND);
         sharingIntent.setType("text/plain");
         sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT,
@@ -598,7 +579,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Couldn't invoke exported method.", e);
                 }
             }
         }
@@ -616,7 +596,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
     }
 
     private void showRebootDialog() {
-        LOGGER.trace("Showing reboot dialog.");
         DialogFragment rebootDialog = new RebootDialogFragment();
         rebootDialog.show(getSupportFragmentManager(), "reboot");
     }
@@ -632,7 +611,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
 
 
     private void doRebootOrHalt(String type) {
-        LOGGER.info("Doing {} on {}...", type, currentDevice.getName());
         if (isNetworkAvailable()) {
             // get connection settings from shared preferences
             final String host = currentDevice.getHost();
@@ -651,7 +629,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
                 final String keyfilePath = currentDevice.getKeyfilePath();
                 if (keyfilePath != null) {
                     if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                        LOGGER.debug("Requesting permission to read private key file from storage...");
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                                 type.equals(Constants.TYPE_HALT) ? REQUEST_PERMISSION_READ_FOR_HALT : REQUEST_PERMISSION_READ_FOR_REBOOT);
                         return;
@@ -688,7 +665,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
     }
 
     private void deleteCurrentDevice() {
-        LOGGER.info("Deleting pi {}.", currentDevice.getName());
         deviceDb.delete(currentDevice.getId());
         if (allDevices != null) {
             allDevices.delete(currentDevice.getId());
@@ -730,7 +706,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
                 final String keyfilePath = currentDevice.getKeyfilePath();
                 if (keyfilePath != null) {
                     if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                        LOGGER.debug("Requesting permission to read private key file from storage...");
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                                 initByPullToRefresh ? REQUEST_PERMISSION_READ_FOR_QUERY_PULL : REQUEST_PERMISSION_READ_FOR_QUERY_NO_PULL);
                         return;
@@ -781,6 +756,7 @@ public class MainActivity extends InjectionAppCompatActivity implements
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_PERMISSION_READ_FOR_QUERY_PULL:
                 if (isPermissionGranted(grantResults)) {
@@ -855,14 +831,11 @@ public class MainActivity extends InjectionAppCompatActivity implements
                 period = LoadAveragePeriod.FIVE_MINUTES;
                 break;
         }
-        LOGGER.debug("Load average preference: {}", period);
         return period;
     }
 
     @Override
     public boolean onNavigationItemSelected(final int itemPosition, long itemId) {
-        LOGGER.debug("Spinner item selected: pos=" + itemPosition + ", id="
-                + itemId);
         new AsyncTask<Long, Void, RaspberryDeviceBean>() {
             @Override
             protected RaspberryDeviceBean doInBackground(Long... params) {
@@ -879,7 +852,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
                     // data get
                     // lost otherwise)
                     if (read.getId() != currentDevice.getId()) {
-                        LOGGER.debug("Switch from device id {} to device id {}.", currentDevice.getId(), read.getId());
                         currentDevice = read;
                         // switched to other device
                         // check if last query data for new device is present
@@ -923,14 +895,11 @@ public class MainActivity extends InjectionAppCompatActivity implements
     protected void onSaveInstanceState(Bundle outState) {
         // saving query data of current device
         if (currentDevice != null) {
-            LOGGER.debug("Saving instance state (current device)");
             outState.putSerializable(CURRENT_DEVICE, currentDevice);
             if (allDevices == null) {
-                LOGGER.debug("Saving new instance of all devices.");
                 allDevices = new SparseArray<RaspberryDeviceBean>();
                 allDevices.put(currentDevice.getId(), currentDevice);
             } else {
-                LOGGER.debug("Adding current device to all devices.");
                 allDevices.put(currentDevice.getId(), currentDevice);
             }
         }
@@ -945,23 +914,18 @@ public class MainActivity extends InjectionAppCompatActivity implements
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         if (savedInstanceState.getSerializable(CURRENT_DEVICE) != null) {
-            LOGGER.debug("Restoring device..");
             currentDevice = (RaspberryDeviceBean) savedInstanceState.getSerializable(CURRENT_DEVICE);
             // restoring tables
-            LOGGER.debug("Setting spinner to show last Pi.");
             this.getSupportActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
             this.getSupportActionBar().setSelectedNavigationItem(currentDevice.getSpinnerPosition());
             if (currentDevice.getLastQueryData() != null
                     && currentDevice.getLastQueryData().getException() == null) {
-                LOGGER.debug("Restoring query data..");
                 this.updateQueryDataInView(currentDevice.getLastQueryData());
             } else {
-                LOGGER.debug("No last query data present.");
                 this.resetView();
             }
         }
         if (savedInstanceState.getSparseParcelableArray(ALL_DEVICES) != null) {
-            LOGGER.debug("Restoring all devices.");
             allDevices = savedInstanceState
                     .getSparseParcelableArray(ALL_DEVICES);
         }
@@ -969,13 +933,11 @@ public class MainActivity extends InjectionAppCompatActivity implements
 
     @Override
     public void onHaltClick(DialogInterface dialog) {
-        LOGGER.trace("ShutdownDialog: Halt chosen.");
         this.doRebootOrHalt(Constants.TYPE_HALT);
     }
 
     @Override
     public void onRebootClick(DialogInterface dialog) {
-        LOGGER.trace("ShutdownDialog: Reboot chosen.");
         this.doRebootOrHalt(Constants.TYPE_REBOOT);
     }
 
@@ -984,7 +946,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
                                     boolean savePassphrase, String type) {
         if (savePassphrase) {
             // save passphrase in db
-            LOGGER.debug("Saving passphrase for device {}.", currentDevice.getName());
             currentDevice.setKeyfilePass(passphrase);
             new Thread() {
                 @Override
@@ -1024,6 +985,7 @@ public class MainActivity extends InjectionAppCompatActivity implements
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
                                     Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         switch (requestCode) {
             case EditRaspiActivity.REQUEST_EDIT:
                 initSpinner();

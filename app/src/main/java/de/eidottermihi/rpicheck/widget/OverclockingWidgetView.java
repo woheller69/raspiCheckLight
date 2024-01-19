@@ -31,9 +31,6 @@ import android.net.Uri;
 import android.view.View;
 import android.widget.RemoteViews;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.eidottermihi.raspicheck.R;
 import de.eidottermihi.rpicheck.activity.MainActivity;
 import de.eidottermihi.rpicheck.db.RaspberryDeviceBean;
@@ -43,13 +40,11 @@ import de.eidottermihi.rpicheck.db.RaspberryDeviceBean;
  */
 public class OverclockingWidgetView {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OverclockingWidgetView.class);
     private static final String ACTION_WIDGET_UPDATE_ONE_MANUAL = "updateOneWidgetManual";
     private static final String URI_SCHEME = "raspicheck";
 
 
     public static RemoteViews initDefaultView(Context context, int appWidgetId, RaspberryDeviceBean deviceBean, boolean showTemp, boolean showArm, boolean showLoad, boolean showMemory) {
-        LOGGER.debug("Initiating default view for Widget[ID={}].", appWidgetId);
         final AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         final RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.overclocking_widget);
         views.setOnClickPendingIntent(R.id.buttonRefresh, getSelfPendingIntent(context, appWidgetId, ACTION_WIDGET_UPDATE_ONE_MANUAL));
@@ -74,7 +69,6 @@ public class OverclockingWidgetView {
     }
 
     public static void startRefreshing(RemoteViews views, Context context, int appWidgetId) {
-        LOGGER.debug("Showing refresh view for Widget[ID={}].", appWidgetId);
         final AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         views.setViewVisibility(R.id.textStatusValue, View.GONE);
         views.setViewVisibility(R.id.buttonRefresh, View.GONE);
@@ -83,7 +77,6 @@ public class OverclockingWidgetView {
     }
 
     public static RemoteViews initNoPermissionView(Context context, int appWidgetId) {
-        LOGGER.debug("Showing no permission view for Widget[ID={}].", appWidgetId);
         final AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         final RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.overclocking_widget_no_read_permission);
         appWidgetManager.updateAppWidget(appWidgetId, views);
@@ -91,7 +84,6 @@ public class OverclockingWidgetView {
     }
 
     public static void stopRefreshing(RemoteViews views, Context context, int appWidgetId) {
-        LOGGER.debug("Stopping refresh view for Widget[ID={}].", appWidgetId);
         final AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         views.setViewVisibility(R.id.buttonRefresh, View.VISIBLE);
         views.setViewVisibility(R.id.refreshProgressBar, View.GONE);
@@ -99,7 +91,6 @@ public class OverclockingWidgetView {
     }
 
     public static RemoteViews initRemovedView(Context context, int appWidgetId) {
-        LOGGER.debug("Showing removed view for Widget[ID={}].", appWidgetId);
         final AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         final RemoteViews removedView = new RemoteViews(context.getPackageName(), R.layout.overclocking_widget);
         appWidgetManager.updateAppWidget(appWidgetId, removedView);

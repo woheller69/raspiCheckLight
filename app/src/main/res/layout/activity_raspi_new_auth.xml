@@ -61,7 +61,7 @@
 
         </RelativeLayout>
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/ssh_password_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -76,7 +76,7 @@
 
                 <requestFocus />
             </EditText>
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
         <RelativeLayout
             android:id="@+id/rel_key"
@@ -108,7 +108,7 @@
                 android:onClick="onCheckboxClick"
                 android:text="@string/raspi_key_checkbox_text" />
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/key_password_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -123,7 +123,7 @@
                     android:hint="@string/raspi_key_password_hint"
                     android:inputType="textPassword" />
 
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
         </RelativeLayout>
 
         <LinearLayout
@@ -132,7 +132,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/port_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
@@ -147,9 +147,9 @@
                     android:hint="@string/ssh_port"
                     android:text="@string/default_ssh_port" />
 
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/sudo_password_layout"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -164,7 +164,7 @@
                     android:inputType="text|textPassword"
                     android:maxLines="1" />
 
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
     </LinearLayout>

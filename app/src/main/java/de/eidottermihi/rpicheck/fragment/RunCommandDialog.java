@@ -29,7 +29,7 @@ import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.DialogFragment;
+import androidx.fragment.app.DialogFragment;
 import android.text.Layout;
 import android.text.method.ScrollingMovementMethod;
 import android.util.TypedValue;
@@ -38,9 +38,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.google.common.base.Strings;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -55,8 +52,6 @@ import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
  * @author Michael
  */
 public class RunCommandDialog extends DialogFragment {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(RunCommandDialog.class);
 
     private boolean didRun = false;
 
@@ -232,7 +227,6 @@ public class RunCommandDialog extends DialogFragment {
                 publishProgress(output);
                 publishProgress("Connection closed.");
             } catch (RaspiQueryException e) {
-                LOGGER.error("Exception occured during command execution.", e);
                 publishProgress("ERROR - " + e.getMessage());
                 if (e.getCause() != null) {
                     publishProgress("Reason: " + e.getCause().getMessage());
@@ -242,7 +236,6 @@ public class RunCommandDialog extends DialogFragment {
                 try {
                     raspiQuery.disconnect();
                 } catch (RaspiQueryException e) {
-                    LOGGER.debug("Error closing the ssh client.", e);
                 }
             }
             return true;

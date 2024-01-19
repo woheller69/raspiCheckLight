@@ -25,8 +25,8 @@ package de.eidottermihi.rpicheck.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.support.v4.widget.CursorAdapter;
-import android.support.v4.widget.ResourceCursorAdapter;
+import androidx.cursoradapter.widget.CursorAdapter;
+import androidx.cursoradapter.widget.ResourceCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

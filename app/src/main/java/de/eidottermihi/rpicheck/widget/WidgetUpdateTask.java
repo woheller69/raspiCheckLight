@@ -29,9 +29,6 @@ import android.os.AsyncTask;
 import android.view.View;
 import android.widget.RemoteViews;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -63,8 +60,6 @@ public class WidgetUpdateTask extends AsyncTask<RaspberryDeviceBean, Void, Map<S
     private static final String KEY_MEM_TOTAL = "memTotal";
     private static final String KEY_MEM_USED_PERCENT = "memUsedPercent";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WidgetUpdateTask.class);
-
     private Context context;
     private RemoteViews widgetView;
     private boolean showArm;
@@ -93,7 +88,6 @@ public class WidgetUpdateTask extends AsyncTask<RaspberryDeviceBean, Void, Map<S
         } else if (deviceBean.usesAuthentificationMethod(RaspberryDeviceBean.AUTH_PUBLIC_KEY_WITH_PASSWORD)) {
             raspiQuery.connectWithPubKeyAuthAndPassphrase(deviceBean.getKeyfilePath(), deviceBean.getKeyfilePass());
         } else {
-            LOGGER.error("Unknown authentification combination!");
         }
     }
 
@@ -125,13 +119,11 @@ public class WidgetUpdateTask extends AsyncTask<RaspberryDeviceBean, Void, Map<S
                 result.put(KEY_LOAD_AVG, String.valueOf(loadAverage));
             }
         } catch (RaspiQueryException e) {
-            LOGGER.info("Widget update failed, setting device status offline.", e);
             result.put(STATUS, STATUS_OFFLINE);
         } finally {
             try {
                 query.disconnect();
             } catch (RaspiQueryException e) {
-                LOGGER.debug("Error closing the ssh client.", e);
             }
         }
         return result;
@@ -174,11 +166,9 @@ public class WidgetUpdateTask extends AsyncTask<RaspberryDeviceBean, Void, Map<S
                 updateMemory(memUsedPercent, widgetView);
             }
         } else {
-            LOGGER.debug("Query failed, showing device as offline.");
         }
         // Instruct the widget manager to update the widget
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-        LOGGER.debug("Updating widget[ID={}] view after AsyncTask finished.", appWidgetId);
         appWidgetManager.updateAppWidget(appWidgetId, widgetView);
     }
 
@@ -195,7 +185,6 @@ public class WidgetUpdateTask extends AsyncTask<RaspberryDeviceBean, Void, Map<S
             value = min;
         }
         double scaledValue = ((value - min) / (max - min)) * 100;
-        LOGGER.debug("Updating progressbar[id={}]: scaledValue = {}", progressBarId, scaledValue);
         views.setProgressBar(progressBarId, 100, (int) scaledValue, false);
     }
 }

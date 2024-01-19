@@ -25,9 +25,6 @@ package de.eidottermihi.rpicheck.activity;
 
 import android.os.AsyncTask;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -52,8 +49,6 @@ import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
 public class SSHQueryTask extends AsyncTask<String, Integer, QueryBean> {
 
     public static final NumberFormat NUMBER_FORMAT = NumberFormat.getPercentInstance();
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SSHQueryTask.class);
 
     private final AsyncQueryDataUpdate delegate;
 
@@ -139,21 +134,17 @@ public class SSHQueryTask extends AsyncTask<String, Integer, QueryBean> {
             bean.setNetworkInfo(networkInformation);
             bean.setProcesses(processes);
             for (String error : bean.getErrorMessages()) {
-                LOGGER.error(error);
             }
         } catch (RaspiQueryException e) {
-            LOGGER.error(e.getMessage(), e);
             bean.setException(e);
         } finally {
             try {
                 queryService.disconnect();
             } catch (RaspiQueryException e) {
-                LOGGER.debug("Error closing the ssh client", e);
             }
         }
         final long msFinish = new Date().getTime();
         final long durationInMs = msFinish - msStart;
-        LOGGER.debug("Query time: {} ms.", durationInMs);
         return bean;
     }
 
