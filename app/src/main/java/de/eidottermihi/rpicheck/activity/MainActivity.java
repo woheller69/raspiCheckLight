@@ -519,8 +519,8 @@ public class MainActivity extends InjectionAppCompatActivity implements
                 this.startActivity(settingsIntent);
                 break;
             case R.id.menu_new_raspi:
-                Intent newRaspiIntent = new Intent(MainActivity.this, NewRaspiActivity.class);
-                this.startActivityForResult(newRaspiIntent, NewRaspiActivity.REQUEST_SAVE);
+                Intent newRaspiIntent = new Intent(MainActivity.this, EditRaspiActivity.class);
+                this.startActivityForResult(newRaspiIntent, EditRaspiActivity.REQUEST_EDIT);
                 break;
             case R.id.menu_delete:
                 this.deleteCurrentDevice();

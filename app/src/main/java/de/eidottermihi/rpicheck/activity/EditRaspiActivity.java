@@ -97,8 +97,14 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
         deviceDb = new DeviceDbHelper(this);
 
         // read device information
-        int deviceId = this.getIntent().getExtras().getInt(Constants.EXTRA_DEVICE_ID);
-        deviceBean = deviceDb.read(deviceId);
+        if (this.getIntent().hasExtra(Constants.EXTRA_DEVICE_ID)) {
+            int deviceId = this.getIntent().getExtras().getInt(Constants.EXTRA_DEVICE_ID);
+            deviceBean = deviceDb.read(deviceId);
+        } else {
+            deviceBean = new RaspberryDeviceBean();
+            deviceBean.setPort(22);
+            deviceBean.setAuthMethod(RaspberryDeviceBean.AUTH_PASSWORD);
+        }
 
         fillFromBean();
     }
@@ -138,6 +144,26 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
         }
     }
 
+    private void addRaspiToDb(final String name, final String host, final String user,
+                              final String authMethod, String sshPort, final String description,
+                              String sudoPass, final String sshPass, final String keyPass, final String keyPath) {
+        // if sshPort is empty, use default port (22)
+        if (Strings.isNullOrEmpty(sshPort)) {
+            sshPort = getText(R.string.default_ssh_port).toString();
+        }
+        if (Strings.isNullOrEmpty(sudoPass)) {
+            sudoPass = "";
+        }
+        final String port = sshPort, pass = sudoPass;
+        new Thread() {
+            @Override
+            public void run() {
+                deviceDb.create(name, host, user, sshPass, Integer.parseInt(port),
+                        description, pass, authMethod, keyPath, keyPass);
+            }
+        }.start();
+    }
+
     private void updateRaspi() {
         boolean validationSuccessful = validator.validatePiEditData(this, editTextName, editTextHost, editTextUser,
                 editTextPass, editTextSshPortOpt, editTextSudoPass);
@@ -149,11 +175,15 @@ public class EditRaspiActivity extends AbstractFileChoosingActivity implements O
             final String sshPort = editTextSshPortOpt.getText().toString().trim();
             final String sudoPass = editTextSudoPass.getText().toString().trim();
             final String description = editTextDescription.getText().toString().trim();
-
             final String pass = editTextPass.getText().toString().trim();
+
+            if (getIntent().hasExtra(Constants.EXTRA_DEVICE_ID)){
                 updateRaspiInDb(name, host, user, pass, sshPort, description, sudoPass,
-                        RaspberryDeviceBean.SPINNER_AUTH_METHODS[0],
+                        RaspberryDeviceBean.AUTH_PASSWORD,
                         null, null);
+            } else {
+                addRaspiToDb(name, host, user, RaspberryDeviceBean.AUTH_PASSWORD, sshPort, description, sudoPass, pass, null, null);
+            }
 
             Toast.makeText(this, R.string.update_successful, Toast.LENGTH_SHORT).show();
             // back to main
