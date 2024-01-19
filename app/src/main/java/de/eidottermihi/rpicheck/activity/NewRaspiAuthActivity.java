@@ -156,7 +156,7 @@ public class NewRaspiAuthActivity extends AbstractFileChoosingActivity implement
             // ssh password (cannot be empty)
             if (validator.checkNonOptionalTextField(editTextSshPass, getString(R.string.validation_msg_password))) {
                 final String sshPass = editTextSshPass.getText().toString().trim();
-                addRaspiToDb(name, host, user, "AUTH_PASSWORD", sshPort, desc, sudoPass, sshPass, null, null);
+                addRaspiToDb(name, host, user, RaspberryDeviceBean.AUTH_PASSWORD, sshPort, desc, sudoPass, sshPass, null, null);
                 saveSuccessful = true;
             }
             if (saveSuccessful) {
