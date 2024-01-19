@@ -1,4 +1,5 @@
-RasPi Check ======
+RasPI Check
+------------
 
 ![RasPi Check Store Graphic](graphics/web_1024_500.jpg)
 
