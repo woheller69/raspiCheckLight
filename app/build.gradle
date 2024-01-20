@@ -5,10 +5,11 @@ android {
 
     defaultConfig {
         applicationId "de.eidottermihi.raspicheck"
-        minSdkVersion 21
+        minSdkVersion 26
         targetSdkVersion 33
         multiDexEnabled true
-        versionName version
+        versionCode 58
+        versionName "5.8"
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }

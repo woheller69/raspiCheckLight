@@ -1,22 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
     package="de.eidottermihi.raspicheck"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="58">
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- for SSH connection -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <!-- reading specified private key files for ssh connection, see NoNonsense-FilePicker docs -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <!-- WidgetUpdateService extends JobIntentService, which requires WAKE_LOCK pre Android O -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application
-        android:allowBackup="true"
-        android:fullBackupContent="@xml/backupscheme"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.rpiCheck.Dark"
         android:requestLegacyExternalStorage="true"
