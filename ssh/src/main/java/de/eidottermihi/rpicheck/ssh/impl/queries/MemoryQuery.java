@@ -27,9 +27,6 @@ import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +41,6 @@ public class MemoryQuery extends GenericQuery<RaspiMemoryBean> {
 
     public static final String MEMORY_INFO_CMD = "cat /proc/meminfo | tr -s \" \"";
     public static final String MEMORY_UNKNOWN_OUPUT = "Memory information could not be queried. See the log for details.";
-    private static final Logger LOGGER = LoggerFactory.getLogger(MemoryQuery.class);
     private static final String KEY_TOTAL = "MemTotal:";
     private static final String KEY_AVAILABLE = "MemAvailable:";
     private static final String KEY_FREE = "MemFree:";
@@ -59,7 +55,6 @@ public class MemoryQuery extends GenericQuery<RaspiMemoryBean> {
 
     @Override
     public RaspiMemoryBean run() throws RaspiQueryException {
-        LOGGER.info("Querying memory information...");
         try {
             Session session = getSSHClient().startSession();
             final Session.Command cmd = session.exec(MEMORY_INFO_CMD);
@@ -80,7 +75,6 @@ public class MemoryQuery extends GenericQuery<RaspiMemoryBean> {
         if (memTotal != null) {
             Long memAvailable = memoryData.get(KEY_AVAILABLE);
             if (memAvailable != null) {
-                LOGGER.debug("Using MemAvailable for calculation of free memory.");
                 memUsed = memTotal - memAvailable;
             } else {
                 // maybe Linux Kernel < 3.14
@@ -91,7 +85,6 @@ public class MemoryQuery extends GenericQuery<RaspiMemoryBean> {
                 Long memBuffers = memoryData.get(KEY_BUFFERS);
                 if (memFree != null && memCached != null && memBuffers != null) {
                     memUsed = memTotal - (memFree + memBuffers + memCached);
-                    LOGGER.debug("Using MemFree,Buffers and Cached for calculation of free memory.");
                 } else {
                     error = produceError(output);
                 }
@@ -133,8 +126,6 @@ public class MemoryQuery extends GenericQuery<RaspiMemoryBean> {
     }
 
     private String produceError(String output) {
-        LOGGER.error("Expected a different output of command: {}", MEMORY_INFO_CMD);
-        LOGGER.error("Output was : {}", output);
         return MEMORY_UNKNOWN_OUPUT;
     }
 }

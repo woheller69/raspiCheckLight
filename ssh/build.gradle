@@ -5,13 +5,9 @@ plugins {
 apply plugin: "com.github.hierynomus.license"
 apply from: "$project.rootDir/gradle/license.gradle"
 
-sourceCompatibility = JavaVersion.VERSION_1_7
-targetCompatibility = JavaVersion.VERSION_1_7
-
 dependencies {
     implementation "com.google.guava:guava:21.0"
     implementation "org.ocpsoft.prettytime:prettytime:2.1.2.Final"
-    implementation "org.slf4j:slf4j-api:$rootProject.ext.slf4jVersion"
 
     implementation "com.hierynomus:sshj:0.31.0"
     implementation "org.bouncycastle:bcprov-jdk15on:1.68"

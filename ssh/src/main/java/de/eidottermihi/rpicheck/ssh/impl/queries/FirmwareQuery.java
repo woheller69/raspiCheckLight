@@ -25,12 +25,7 @@ package de.eidottermihi.rpicheck.ssh.impl.queries;
 
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
-import net.schmizz.sshj.connection.ConnectionException;
 import net.schmizz.sshj.connection.channel.direct.Session;
-import net.schmizz.sshj.transport.TransportException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -43,8 +38,6 @@ import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
  * @author Michael
  */
 public class FirmwareQuery extends GenericQuery<String> implements Queries<String> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(FirmwareQuery.class);
 
     private static final int SHORTENED_HASH_LENGTH = 8;
     private static final String BLANK = " ";
@@ -62,8 +55,7 @@ public class FirmwareQuery extends GenericQuery<String> implements Queries<Strin
 
     @Override
     public String run() throws RaspiQueryException {
-        LOGGER.debug("Querying firmware version, vcgencmd path={}", this.vcgencmdPath);
-        try {
+         try {
             Session session = getSSHClient().startSession();
             String cmdString = vcgencmdPath + " version";
             final Session.Command cmd = session.exec(cmdString);
@@ -71,7 +63,6 @@ public class FirmwareQuery extends GenericQuery<String> implements Queries<Strin
             String output = IOUtils.readFully(cmd.getInputStream())
                     .toString();
             final String result = this.parseFirmwareVersion(output);
-            LOGGER.debug("Firmware version: {}", result);
             return result;
         } catch (IOException e) {
             throw RaspiQueryException.createTransportFailure(e);
@@ -94,8 +85,6 @@ public class FirmwareQuery extends GenericQuery<String> implements Queries<Strin
                 return splitted[2];
             }
         } else {
-            LOGGER.error("Could not parse firmware. Maybe the output of 'vcgencmd version' changed.");
-            LOGGER.debug("Output of 'vcgencmd version': \n{}", output);
             return "n/a";
         }
     }

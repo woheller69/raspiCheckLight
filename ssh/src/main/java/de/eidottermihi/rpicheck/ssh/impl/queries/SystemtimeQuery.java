@@ -27,9 +27,6 @@ import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -42,8 +39,6 @@ import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
  */
 public class SystemtimeQuery extends GenericQuery<String> implements Queries<String> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FirmwareQuery.class);
-
     public SystemtimeQuery(SSHClient sshClient) {
         super(sshClient);
     }
@@ -51,7 +46,6 @@ public class SystemtimeQuery extends GenericQuery<String> implements Queries<Str
 
     @Override
     public String run() throws RaspiQueryException {
-        LOGGER.debug("Querying system time via 'date --rfc-2822'.");
         try {
             Session session = getSSHClient().startSession();
             String cmdString = "date --rfc-2822";
@@ -60,7 +54,6 @@ public class SystemtimeQuery extends GenericQuery<String> implements Queries<Str
             String output = IOUtils.readFully(cmd.getInputStream())
                     .toString();
             final String result = output.trim();
-            LOGGER.debug("System time: {}", result);
             return result;
         } catch (IOException e) {
             throw RaspiQueryException.createTransportFailure(e);

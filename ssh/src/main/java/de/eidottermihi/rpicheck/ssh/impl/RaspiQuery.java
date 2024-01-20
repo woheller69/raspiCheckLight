@@ -40,8 +40,6 @@ import net.schmizz.sshj.userauth.UserAuthException;
 import net.schmizz.sshj.userauth.keyprovider.KeyProvider;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.Provider;
@@ -65,9 +63,6 @@ import de.eidottermihi.rpicheck.ssh.beans.VcgencmdBean;
  * Simple API for interacting with a Raspberry Pi computer over SSH.
  */
 public class RaspiQuery implements IQueryService {
-
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(RaspiQuery.class);
 
     private static final int FREQ_ARM = 0;
     private static final int FREQ_CORE = 1;
@@ -103,21 +98,12 @@ public class RaspiQuery implements IQueryService {
      */
     public RaspiQuery(final String host, final String user, final Integer port) {
         final Provider[] providers = Security.getProviders();
-        LOGGER.debug("+++ Registered JCE providers +++");
-        for (Provider prov : providers) {
-            LOGGER.debug("Provider: {} - {}", prov.getName(), prov.getInfo());
-        }
         final Set<String> signatures = Security.getAlgorithms("signature");
-        LOGGER.debug("+++ Availabe signatures +++");
-        for (String sig : signatures) {
-            LOGGER.debug("Signature: {}", sig);
-        }
         if (Strings.isNullOrEmpty(host)) {
             throw new IllegalArgumentException("hostname should not be blank.");
         } else if (Strings.isNullOrEmpty(user)) {
             throw new IllegalArgumentException("username should not be blank.");
         } else {
-            LOGGER.info("Initialiazed new RaspiQuery for host {} on port {}", host, port);
             this.hostname = host;
             this.username = user;
             if (port != null) {
@@ -203,7 +189,6 @@ public class RaspiQuery implements IQueryService {
      */
     @Override
     public final VcgencmdBean queryVcgencmd() throws RaspiQueryException {
-        LOGGER.debug("Querying vcgencmd...");
         // first, find the location of vcgencmd
         final String vcgencmdPath = findVcgencmd().orNull();
         if (vcgencmdPath == null) {
@@ -252,10 +237,8 @@ public class RaspiQuery implements IQueryService {
                         }
                     }
                     if (foundPath != null) {
-                        LOGGER.info("Found vcgencmd in path: {}.", foundPath);
                         return Optional.of(foundPath);
                     } else {
-                        LOGGER.error("vcgencmd was not found. Verify that vcgencmd is available in /usr/bin or /opt/vc/bin and make sure your user is in group 'video'.");
                         return Optional.absent();
                     }
                 } catch (IOException e) {
@@ -280,13 +263,11 @@ public class RaspiQuery implements IQueryService {
     private boolean isValidVcgencmdPath(String path, SSHClient client) throws IOException {
         final Session session = client.startSession();
         session.allocateDefaultPTY();
-        LOGGER.debug("Checking vcgencmd location: {}", path);
         final Command cmd = session.exec(path);
         cmd.join(30, TimeUnit.SECONDS);
         session.close();
         final Integer exitStatus = cmd.getExitStatus();
         final String output = IOUtils.readFully(cmd.getInputStream()).toString().toLowerCase();
-        LOGGER.debug("Path check output: {}", output);
         return exitStatus != null && exitStatus.equals(0)
                 && !output.contains("not found") && !output.contains("no such file or directory");
     }
@@ -312,7 +293,6 @@ public class RaspiQuery implements IQueryService {
     @Override
     public final Double queryVolts(String vcgencmdPath)
             throws RaspiQueryException {
-        LOGGER.info("Querying core volts...");
         if (client != null) {
             if (client.isConnected() && client.isAuthenticated()) {
                 Session session;
@@ -365,7 +345,6 @@ public class RaspiQuery implements IQueryService {
      */
     @Override
     public String queryModel() throws RaspiQueryException {
-        LOGGER.info("Querying raspberry pi model...");
         if (client != null) {
             if (client.isConnected() && client.isAuthenticated()) {
                 Session session;
@@ -396,7 +375,6 @@ public class RaspiQuery implements IQueryService {
      */
     @Override
     public String queryCpuArchitecture() throws RaspiQueryException {
-        LOGGER.info("Querying cpu architecture...");
         if (client != null) {
             if (client.isConnected() && client.isAuthenticated()) {
                 Session session;
@@ -438,7 +416,6 @@ public class RaspiQuery implements IQueryService {
     @Override
     public final List<DiskUsageBean> queryDiskUsage()
             throws RaspiQueryException {
-        LOGGER.info("Querying disk usage...");
         if (client != null) {
             if (client.isConnected() && client.isAuthenticated()) {
                 Session session;
@@ -468,7 +445,6 @@ public class RaspiQuery implements IQueryService {
      */
     @Override
     public String queryKernelVersion() throws RaspiQueryException {
-        LOGGER.info("Querying kernel version...");
         if (client != null) {
             if (client.isConnected() && client.isAuthenticated()) {
                 Session session;
@@ -498,7 +474,6 @@ public class RaspiQuery implements IQueryService {
      */
     @Override
     public final String queryDistributionName() throws RaspiQueryException {
-        LOGGER.info("Querying distribution name...");
         if (client != null) {
             if (client.isConnected() && client.isAuthenticated()) {
                 Session session;
@@ -534,7 +509,6 @@ public class RaspiQuery implements IQueryService {
     @Override
     public final List<ProcessBean> queryProcesses(boolean showRootProcesses)
             throws RaspiQueryException {
-        LOGGER.info("Querying running processes...");
         if (client != null) {
             if (client.isConnected() && client.isAuthenticated()) {
                 Session session;
@@ -568,7 +542,6 @@ public class RaspiQuery implements IQueryService {
     public final void sendRebootSignal(String sudoPassword)
             throws RaspiQueryException {
         if (sudoPassword == null) {
-            LOGGER.info("No sudo password for reboot specified. Using empty password instead.");
             sudoPassword = "";
         }
         final StringBuilder sb = new StringBuilder();
@@ -583,27 +556,22 @@ public class RaspiQuery implements IQueryService {
                             .append(" | sudo -S /sbin/shutdown -r now")
                             .toString();
                     final String rebootCmdLogger = "echo \"??SUDO_PW??\" | sudo -S /sbin/shutdown -r now";
-                    LOGGER.info("Sending reboot command: {}", rebootCmdLogger);
                     Command cmd = session.exec(command);
                     try {
                         cmd.join();
                         session.join();
                     } catch (ConnectionException e) {
-                        LOGGER.debug("ConnectException while sending reboot command. Probably system is going down...", e);
                         return;
                     }
                     if (cmd.getExitStatus() != null && cmd.getExitStatus() != 0) {
-                        LOGGER.warn("Sudo unknown: Trying \"reboot\"...");
                         // openelec running
                         session = client.startSession();
                         session.allocateDefaultPTY();
                         cmd = session.exec("reboot");
                         try {
                             cmd.join();
-                            LOGGER.debug("join successful after 'reboot'.");
                         } catch (ConnectionException e) {
                             // system went down
-                            LOGGER.debug("ConnectException while sending reboot command. Probably system is going down...", e);
                         }
                     }
                 } catch (IOException e) {
@@ -631,7 +599,6 @@ public class RaspiQuery implements IQueryService {
     public final void sendHaltSignal(String sudoPassword)
             throws RaspiQueryException {
         if (sudoPassword == null) {
-            LOGGER.info("No sudo password for halt specified. Using empty password instead.");
             sudoPassword = "";
         }
         final StringBuilder sb = new StringBuilder();
@@ -646,27 +613,22 @@ public class RaspiQuery implements IQueryService {
                             .append(" | sudo -S /sbin/shutdown -h now")
                             .toString();
                     final String haltCmdLogger = "echo \"??SUDO_PW??\" | sudo -S /sbin/shutdown -h now";
-                    LOGGER.info("Sending halt command: {}", haltCmdLogger);
                     Command cmd = session.exec(command);
                     try {
                         cmd.join();
                         session.join();
                     } catch (ConnectionException e) {
-                        LOGGER.debug("ConnectException while sending halt command. Probably system is going down...", e);
                         return;
                     }
                     if (cmd.getExitStatus() != null && cmd.getExitStatus() != 0) {
                         // openelec running
                         session = client.startSession();
                         session.allocateDefaultPTY();
-                        LOGGER.warn("Sudo unknown: Trying \"halt\"...");
                         cmd = session.exec("halt");
                         try {
                             cmd.join();
-                            LOGGER.debug("join successful after 'halt'.");
                         } catch (ConnectionException e) {
                             // system went down
-                            LOGGER.debug("ConnectException while sending halt command. Probably system is going down...", e);
                         }
                     }
                 } catch (IOException e) {
@@ -714,12 +676,8 @@ public class RaspiQuery implements IQueryService {
                             Integer.parseInt(cols.get(0)), cols.get(1), cols
                             .get(2), sb.toString()));
                 } catch (NumberFormatException e) {
-                    LOGGER.error("Could not parse processes.");
-                    LOGGER.error("Error occured on following line: {}", line);
                 }
             } else {
-                LOGGER.error("Line[] length: {}", cols.size());
-                LOGGER.error("Expcected another output of ps. Skipping line: {}", line);
             }
         }
         return processes;
@@ -731,8 +689,6 @@ public class RaspiQuery implements IQueryService {
             final String distriWithApostroph = split[1];
             return distriWithApostroph.replace("\"", "");
         } else {
-            LOGGER.error("Could not parse distribution. Make sure 'cat /etc/*-release' works on your distribution.");
-            LOGGER.error("Output of {}: \n{}", DISTRIBUTION_CMD, output);
             return N_A;
         }
     }
@@ -772,15 +728,12 @@ public class RaspiQuery implements IQueryService {
                 }
                 if (filesystem.length() > 20) {
                     // shorten filesystem
-                    LOGGER.debug("Shorten filesystem: {}", filesystem);
                     filesystem = ".." + filesystem.substring(filesystem.length() - 21, filesystem.length());
                 }
                 disks.add(new DiskUsageBean(filesystem, size, used, free, usedPercentage, mountpoint));
             } else {
-                LOGGER.warn("Expected another output of df -h. Skipping line: {}", line);
             }
         }
-        LOGGER.debug("Disks: {}", disks);
         return disks;
     }
 
@@ -791,8 +744,6 @@ public class RaspiQuery implements IQueryService {
             final String volts = voltsWithUnit.substring(0, voltsWithUnit.length() - 1);
             return Double.parseDouble(volts);
         } else {
-            LOGGER.error("Could not parse cpu voltage.");
-            LOGGER.error("Output of 'vcgencmd measure_volts core': \n{}", output);
             return 0D;
         }
     }
@@ -809,8 +760,6 @@ public class RaspiQuery implements IQueryService {
             final String formatted = m.group().trim();
             return Double.parseDouble(formatted);
         } else {
-            LOGGER.error("Could not parse cpu temperature.");
-            LOGGER.error("Output of 'vcgencmd measure_temp': \n{}", output);
             return 0D;
         }
     }
@@ -828,14 +777,8 @@ public class RaspiQuery implements IQueryService {
             try {
                 formatted = Long.parseLong(splitted[1]);
             } catch (NumberFormatException e) {
-                LOGGER.error("Could not parse frequency.");
-                LOGGER.error("Output of 'vcgencmd measure_clock [core/arm]': \n{}",
-                        output);
             }
         } else {
-            LOGGER.error("Could not parse frequency.");
-            LOGGER.error("Output of 'vcgencmd measure_clock [core/arm]': \n{}",
-                    output);
         }
         return formatted;
     }
@@ -847,9 +790,7 @@ public class RaspiQuery implements IQueryService {
      */
     @Override
     public final void connect(String password) throws RaspiQueryException {
-        LOGGER.info("Connecting to host '{}' on port '{}'.", hostname, port);
         client = newAndroidSSHClient();
-        LOGGER.info("Using no host key verification.");
         client.addHostKeyVerifier(new PromiscuousVerifier());
         try {
             client.connect(hostname, port);
@@ -874,17 +815,13 @@ public class RaspiQuery implements IQueryService {
     @Override
     public final void connectWithPubKeyAuth(final String keyfilePath)
             throws RaspiQueryException {
-        LOGGER.info("Connecting to host '{}' on port '{}'.", hostname, port);
         client = newAndroidSSHClient();
-        LOGGER.info("Using no host key verification.");
         client.addHostKeyVerifier(new PromiscuousVerifier());
         try {
             client.connect(hostname, port);
-            LOGGER.info("Using private/public key authentication, keyfile: '{}'", keyfilePath);
             KeyProvider keyProvider = client.loadKeys(keyfilePath);
             client.authPublickey(username, keyProvider);
         } catch (UserAuthException e) {
-            LOGGER.info("Authentication failed.", e);
             throw RaspiQueryException.createAuthenticationFailure(hostname,
                     username, e);
         } catch (TransportException e) {
@@ -906,9 +843,7 @@ public class RaspiQuery implements IQueryService {
     @Override
     public void connectWithPubKeyAuthAndPassphrase(String path,
                                                    String privateKeyPass) throws RaspiQueryException {
-        LOGGER.info("Connecting to host '{}' on port '{}'.", hostname, port);
         client = newAndroidSSHClient();
-        LOGGER.info("Using no host key verification.");
         client.addHostKeyVerifier(new PromiscuousVerifier());
         try {
             client.connect(hostname, port);
@@ -916,11 +851,9 @@ public class RaspiQuery implements IQueryService {
             throw RaspiQueryException.createConnectionFailure(hostname, port, e);
         }
         try {
-            LOGGER.info("Using private/public key authentification with encrypted privatekey, keyfile: '{}'", path);
             final KeyProvider keyProvider = client.loadKeys(path, privateKeyPass.toCharArray());
             client.authPublickey(username, keyProvider);
         } catch (UserAuthException e) {
-            LOGGER.info("Authentification failed.", e);
             throw RaspiQueryException.createAuthenticationFailure(hostname, username, e);
         } catch (TransportException e) {
             throw RaspiQueryException.createTransportFailure(hostname, e);
@@ -939,12 +872,9 @@ public class RaspiQuery implements IQueryService {
         if (client != null) {
             if (client.isConnected()) {
                 try {
-                    LOGGER.info("Disconnecting from host {}.",
-                            this.getHostname());
                     client.disconnect();
                 } catch (IOException e) {
                     // dont throw, just log
-                    LOGGER.warn("Caught exception during disconnect: {}", e);
                 }
             }
         }
@@ -978,7 +908,6 @@ public class RaspiQuery implements IQueryService {
      */
     @Override
     public String run(String command, int timeout) throws RaspiQueryException {
-        LOGGER.info("Running custom command: {}", command);
         if (client != null) {
             if (client.isConnected() && client.isAuthenticated()) {
                 Session session;
@@ -992,7 +921,6 @@ public class RaspiQuery implements IQueryService {
                     final String error = IOUtils.readFully(cmd.getErrorStream()).toString();
                     final StringBuilder sb = new StringBuilder();
                     final String out = sb.append(output).append(error).toString();
-                    LOGGER.debug("Output of '{}': {}", command, out);
                     session.close();
                     return out;
                 } catch (IOException e) {

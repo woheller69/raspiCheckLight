@@ -29,9 +29,6 @@ import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +42,6 @@ import de.eidottermihi.rpicheck.ssh.beans.WlanBean;
 import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
 
 public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceInformation>> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(NetworkInformationQuery.class);
 
     private static final Pattern IWCONFIG_LINK_PATTERN = Pattern.compile("Link Quality=([0-9]{1,3})\\/([0-9]{1,3})");
     private static final Pattern IWCONFIG_LEVEL_DBM_PATTERN = Pattern.compile("Signal level=(.*)\\s(dBm)");
@@ -65,7 +60,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
         // 1. find all network interfaces (excluding loopback interface) and
         // check carrier
         List<String> interfaces = this.queryInterfaceList();
-        LOGGER.info("Available interfaces: {}", interfaces);
         for (String interfaceName : interfaces) {
             NetworkInterfaceInformation interfaceInfo = new NetworkInterfaceInformation();
             interfaceInfo.setName(interfaceName);
@@ -109,7 +103,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
                 wirelessInterfaces) {
             WlanBean wlanBean = this.queryWirelessInterface(nic.getName(), iwconfigPath);
             if (wlanBean != null) {
-                LOGGER.info("Wireless stats for {}: {}", nic.getName(), wlanBean);
                 nic.setWlanInfo(wlanBean);
             }
         }
@@ -132,18 +125,14 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
             String output = IOUtils.readFully(cmd.getInputStream())
                     .toString();
             if (exitStatus == 0) {
-                LOGGER.debug("Output of '{}': \n{}", cmdString, output);
                 final String[] splitted = output.split("\\s");
                 if (splitted.length >= 2) {
                     String path = splitted[1].trim();
-                    LOGGER.debug("Path for '{}': {}", executableBinary, path);
                     return Optional.of(path);
                 } else {
-                    LOGGER.warn("Could not get path to executable '{}'. Output of '{}' was: {}", executableBinary, cmdString, output);
                     return Optional.absent();
                 }
             } else {
-                LOGGER.warn("Can't find path to executable '{}', execution of '{}' failed with exit code {}, output: {}", executableBinary, cmdString, exitStatus, output);
                 return Optional.absent();
             }
         } catch (IOException e) {
@@ -176,7 +165,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
      */
     private WlanBean queryWirelessInterfaceWithProcNetWireless(String interfaceName)
             throws RaspiQueryException {
-        LOGGER.info("Querying wireless interface {} from /proc/net/wireless ...", interfaceName);
         Session session;
         try {
             session = getSSHClient().startSession();
@@ -184,8 +172,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
             final Session.Command cmd = session.exec(cmdString);
             cmd.join(30, TimeUnit.SECONDS);
             String output = IOUtils.readFully(cmd.getInputStream()).toString();
-            LOGGER.debug("Real output of /proc/net/wireless: \n{}",
-                    output);
             return this.parseProcNetWireless(output, interfaceName);
         } catch (IOException e) {
             throw RaspiQueryException.createTransportFailure(e);
@@ -196,30 +182,24 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
         final String[] lines = output.split("\n");
         for (String line : lines) {
             if (line.startsWith("Inter-") || line.startsWith(" face")) {
-                LOGGER.debug("Skipping header line: {}", line);
                 continue;
             }
             final String[] cols = line.split("\\s+");
             if (cols.length >= 11) {
-                LOGGER.debug("Parsing output line: {}", line);
                 // getting interface name
                 final String name = cols[1].replace(":", "");
                 if (interfaceName.equalsIgnoreCase(name)) {
                     final String linkQuality = cols[3].replace(".", "");
-                    LOGGER.debug("Link quality '{}'", linkQuality);
                     final String signalLevel = cols[4].replace(".", "");
-                    LOGGER.debug("Signal level: '{}'", signalLevel);
                     Integer linkQualityInt = null;
                     try {
                         linkQualityInt = Integer.parseInt(linkQuality);
                     } catch (NumberFormatException e) {
-                        LOGGER.warn("Could not parse link quality field for input: {}.", linkQuality);
                     }
                     Integer signalLevelInt = null;
                     try {
                         signalLevelInt = Integer.parseInt(signalLevel);
                     } catch (Exception e) {
-                        LOGGER.warn("Could not parse signal level field for input: {}.", signalLevel);
                     }
                     if (signalLevelInt == null || linkQualityInt == null) {
                         return null;
@@ -237,21 +217,17 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
                         // already percentage
                         signalLevelPercentage = signalLevelInt;
                     }
-                    LOGGER.info("WiFi status of {}: link quality {}%, signal level {}%.", name, linkQualityPercentage, signalLevelPercentage);
                     final WlanBean wlanInfo = new WlanBean();
                     wlanInfo.setLinkQuality(linkQualityPercentage);
                     wlanInfo.setSignalLevel(signalLevelPercentage);
-                    LOGGER.debug("Adding wifi-status info to interface {}.", interfaceName);
                     return wlanInfo;
                 }
             }
         }
-        LOGGER.warn("No line for interface '{}' present at /proc/net/wireless, no wifi signal quality available.", interfaceName);
         return null;
     }
 
     private WlanBean queryWirelessInterfaceWithIwconfig(String interfaceName, String iwconfigPath) throws RaspiQueryException {
-        LOGGER.info("Executing {} to query wireless interface '{}'...", iwconfigPath, interfaceName);
         Session session;
         try {
             session = getSSHClient().startSession();
@@ -261,7 +237,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
             cmd.join(30, TimeUnit.SECONDS);
             String output = IOUtils.readFully(cmd.getInputStream())
                     .toString();
-            LOGGER.debug("Output of '{}': \n{}", cmdString, output);
             return this.parseIwconfigOutput(output);
         } catch (IOException e) {
             throw RaspiQueryException.createTransportFailure(e);
@@ -295,12 +270,10 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
                     double signalLevelPercentage = Double.valueOf(signalLevelMatcher.group(1));
                     wlanBean.setSignalLevel((int) signalLevelPercentage);
                 } else {
-                    LOGGER.error("No matcher for 'Signal level' matched the output of iwconfig:\n{}", output);
                 }
             }
             return wlanBean;
         } else {
-            LOGGER.error("Failed to parse 'iwconfig' output:\n{}", output);
             return null;
         }
     }
@@ -311,13 +284,11 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
         double min = 0;
         double max = 100;
         int percentage = (int) Math.min(Math.max(2 * (dbmValue + 100), min), max);
-        LOGGER.debug("Calculated signal level for {} dBm: {} %", dbmValue, percentage);
         return percentage;
     }
 
     private double computeLinkQualityPercentage(Double value, Double linkMaximum) {
         double percentageValue = (100 / linkMaximum) * value;
-        LOGGER.debug("Calculated link quality for {}/{} = {}%", value, linkMaximum, percentageValue);
         return percentageValue;
     }
 
@@ -329,7 +300,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
      * @throws RaspiQueryException
      */
     private String queryIpAddress(String name) throws RaspiQueryException {
-        LOGGER.info("Querying ip address of interface: '{}'", name);
         Session session;
         try {
             session = getSSHClient().startSession();
@@ -340,20 +310,12 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
             cmd.join(30, TimeUnit.SECONDS);
             final String output = IOUtils.readFully(
                     cmd.getInputStream()).toString();
-            LOGGER.debug("Output of ip query: {}", output);
             final Matcher m = IPADDRESS_PATTERN.matcher(output);
             if (m.find()) {
                 final String ipAddress = m.group().trim();
-                LOGGER.info("{} - IP address: {}.", name, ipAddress);
                 return ipAddress;
             } else {
-                LOGGER.error(
-                        "IP address pattern: No match found for output: {}.",
-                        output);
             }
-            LOGGER.info(
-                    "'ip' command not available. Trying '/sbin/ifconfig' to get ip address of interface {}.",
-                    name);
             session = getSSHClient().startSession();
             session.allocateDefaultPTY();
             final String ifConfigCmd = "/sbin/ifconfig " + name
@@ -362,18 +324,11 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
             ifCfgCmd.join(30, TimeUnit.SECONDS);
             final String ifconfigOutput = IOUtils.readFully(
                     ifCfgCmd.getInputStream()).toString();
-            LOGGER.debug("Output of ifconfig query: {}.",
-                    ifconfigOutput);
             final Matcher m2 = IPADDRESS_PATTERN.matcher(ifconfigOutput);
             if (m2.find()) {
                 final String ipAddress = m2.group().trim();
-                LOGGER.info("{} - IP address: {}.", name, ipAddress);
                 return ipAddress;
             } else {
-                LOGGER.error(
-                        "IP address pattern: No match found for output: {}.",
-                        ifconfigOutput);
-                LOGGER.error("Querying IP address failed. It seems like 'ip' and 'ifconfig' are not available on your Pi.");
                 return null;
             }
         } catch (IOException e) {
@@ -391,7 +346,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
      */
     private boolean checkCarrier(String interfaceName)
             throws RaspiQueryException {
-        LOGGER.info("Checking carrier of {}...", interfaceName);
         Session session;
         try {
             session = getSSHClient().startSession();
@@ -400,11 +354,8 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
             cmd.join(30, TimeUnit.SECONDS);
             final String output = IOUtils.readFully(cmd.getInputStream()).toString();
             if (output.contains("1")) {
-                LOGGER.debug("{} has a carrier up and running.",
-                        interfaceName);
                 return true;
             } else {
-                LOGGER.debug("{} has no carrier.", interfaceName);
                 return false;
             }
         } catch (IOException e) {
@@ -420,7 +371,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
      * @throws RaspiQueryException if something goes wrong
      */
     private List<String> queryInterfaceList() throws RaspiQueryException {
-        LOGGER.info("Querying network interfaces...");
         Session session;
         try {
             session = getSSHClient().startSession();
@@ -433,7 +383,6 @@ public class NetworkInformationQuery extends GenericQuery<List<NetworkInterfaceI
             final List<String> interfaces = new ArrayList<String>();
             for (String interfaceLine : lines) {
                 if (!interfaceLine.startsWith("lo")) {
-                    LOGGER.debug("Found interface {}.", interfaceLine);
                     interfaces.add(interfaceLine);
                 }
             }

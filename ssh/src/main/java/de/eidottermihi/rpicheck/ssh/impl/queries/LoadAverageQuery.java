@@ -28,9 +28,6 @@ import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -47,8 +44,6 @@ import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
  */
 public class LoadAverageQuery extends GenericQuery<Double> implements
         Queries<Double> {
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(LoadAverageQuery.class);
 
     private static final String LOAD_AVG_CMD = "cat /proc/loadavg; cat /proc/stat | grep cpu | wc -l";
 
@@ -61,7 +56,6 @@ public class LoadAverageQuery extends GenericQuery<Double> implements
 
     @Override
     public Double run() throws RaspiQueryException {
-        LOGGER.info("Querying load average for time period {}", this.period);
         Session session;
         try {
             session = getSSHClient().startSession();
@@ -81,7 +75,6 @@ public class LoadAverageQuery extends GenericQuery<Double> implements
         String[] lines = output.split("\n");
         Double loadAvg = null;
         for (String line : lines) {
-            LOGGER.debug("Checking line: {}", line);
             final String[] split = line.split(" ");
             if (split.length == 5) {
                 try {
@@ -101,7 +94,6 @@ public class LoadAverageQuery extends GenericQuery<Double> implements
                     // got load average, continue with next line
                     continue;
                 } catch (NumberFormatException e) {
-                    LOGGER.debug("Skipping line: {}", line);
                 }
             }
             if (split.length == 1 && loadAvg != null) {
@@ -110,13 +102,9 @@ public class LoadAverageQuery extends GenericQuery<Double> implements
                     Integer coreCount = Integer.parseInt(split[0].trim()) - 1;
                     return Math.min(1.0D, loadAvg / coreCount);
                 } catch (NumberFormatException e) {
-                    LOGGER.debug("Skipping line: {}", line);
                 }
             }
-            LOGGER.debug("Skipping line: {}", line);
         }
-        LOGGER.error("Expected a different output of command: {}", LOAD_AVG_CMD);
-        LOGGER.error("Actual output was: {}", output);
         return 0D;
     }
 

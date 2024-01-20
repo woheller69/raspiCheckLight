@@ -28,9 +28,6 @@ import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -38,9 +35,6 @@ import de.eidottermihi.rpicheck.ssh.GenericQuery;
 import de.eidottermihi.rpicheck.ssh.impl.RaspiQueryException;
 
 public class SerialNoQuery extends GenericQuery<String> {
-
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(SerialNoQuery.class);
     private static final String CAT_PROC_CPUINFO_GREP_SERIAL = "cat /proc/cpuinfo | grep Serial";
     private static final String N_A = "n/a";
 
@@ -50,7 +44,6 @@ public class SerialNoQuery extends GenericQuery<String> {
 
     @Override
     public String run() throws RaspiQueryException {
-        LOGGER.info("Querying serial number...");
         try {
             Session session = getSSHClient().startSession();
             final Command cmd = session.exec(CAT_PROC_CPUINFO_GREP_SERIAL);
@@ -68,11 +61,6 @@ public class SerialNoQuery extends GenericQuery<String> {
             final String cpuSerial = split[1].trim();
             return cpuSerial;
         } else {
-            LOGGER.error(
-                    "Could not query cpu serial number. Expected another output of '{}'.",
-                    CAT_PROC_CPUINFO_GREP_SERIAL);
-            LOGGER.error("Output of '{}': \n{}", CAT_PROC_CPUINFO_GREP_SERIAL,
-                    output);
             return N_A;
         }
     }

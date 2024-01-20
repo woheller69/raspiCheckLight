@@ -30,9 +30,6 @@ import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -49,12 +46,9 @@ public class UptimeQuery extends GenericQuery<Double> implements
     }
 
     private static final String UPTIME_CMD = "cat /proc/uptime";
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(UptimeQuery.class);
 
     @Override
     public Double run() throws RaspiQueryException {
-        LOGGER.info("Querying uptime...");
         try {
             final Session session = getSSHClient().startSession();
             final Command cmd = session.exec(UPTIME_CMD);
@@ -75,14 +69,11 @@ public class UptimeQuery extends GenericQuery<Double> implements
                 try {
                     return Double.parseDouble(split.get(0));
                 } catch (NumberFormatException e) {
-                    LOGGER.debug("Skipping line: {}", line);
                 }
             } else {
-                LOGGER.debug("Skipping line: {}", line);
             }
         }
-        LOGGER.error("Expected a different output of command: {}", UPTIME_CMD);
-        LOGGER.error("Actual output was: {}", output);
+
         return 0D;
     }
 
