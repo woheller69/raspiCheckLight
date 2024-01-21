@@ -69,6 +69,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import de.eidottermihi.raspicheck.BuildConfig;
 import de.eidottermihi.raspicheck.R;
 import de.eidottermihi.rpicheck.activity.helper.Constants;
+import de.eidottermihi.rpicheck.activity.helper.CursorHelper;
 import de.eidottermihi.rpicheck.activity.helper.FormatHelper;
 import de.eidottermihi.rpicheck.adapter.DeviceSpinnerAdapter;
 import de.eidottermihi.rpicheck.beans.QueryBean;
@@ -211,6 +212,27 @@ public class MainActivity extends InjectionAppCompatActivity implements
     protected void onResume() {
         super.onResume();
         isOnBackground = false;
+        if (currentDevice != null) {
+            if (currentDevice.getLastQueryData() != null){
+                long millis = currentDevice.getLastQueryData().getLastUpdate().getTime();
+                long sysMillis = System.currentTimeMillis();
+                if (sysMillis-millis > 5 * 60 * 1000){
+                    swipeRefreshLayout.setRefreshing(true);
+                    doQuery(true);
+                }
+            } else {
+                swipeRefreshLayout.setRefreshing(true);
+                doQuery(true);
+            }
+        } else {
+            deviceCursor = deviceDb.getFullDeviceCursor();
+            if (deviceCursor.getCount() > 0){
+                deviceCursor.moveToFirst();
+                currentDevice = CursorHelper.readDevice(deviceCursor);
+                swipeRefreshLayout.setRefreshing(true);
+                doQuery(true);
+            }
+        }
     }
 
     @Override
@@ -868,6 +890,8 @@ public class MainActivity extends InjectionAppCompatActivity implements
                         }
                         if (!lastQueryPresent) {
                             resetView();
+                            swipeRefreshLayout.setRefreshing(true);
+                            doQuery(true);
                         }
                     } else {
                         // device was maybe updated

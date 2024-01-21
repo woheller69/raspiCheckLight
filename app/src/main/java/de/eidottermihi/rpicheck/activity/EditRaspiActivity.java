@@ -43,10 +43,11 @@ import de.eidottermihi.rpicheck.db.RaspberryDeviceBean;
 import io.freefair.android.injection.annotation.InjectView;
 import io.freefair.android.injection.annotation.XmlLayout;
 import io.freefair.android.injection.annotation.XmlMenu;
+import io.freefair.android.injection.app.InjectionAppCompatActivity;
 
 @XmlLayout(R.layout.activity_raspi_edit)
 @XmlMenu(R.menu.activity_raspi_edit)
-public class EditRaspiActivity extends AbstractFileChoosingActivity implements OnItemSelectedListener {
+public class EditRaspiActivity extends InjectionAppCompatActivity implements OnItemSelectedListener {
 
     public static final int REQUEST_EDIT = 10;
 
