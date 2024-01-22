@@ -890,8 +890,6 @@ public class MainActivity extends InjectionAppCompatActivity implements
                         }
                         if (!lastQueryPresent) {
                             resetView();
-                            swipeRefreshLayout.setRefreshing(true);
-                            doQuery(true);
                         }
                     } else {
                         // device was maybe updated
@@ -906,6 +904,18 @@ public class MainActivity extends InjectionAppCompatActivity implements
                 }
                 if (currentDevice != null) {
                     currentDevice.setSpinnerPosition(itemPosition);
+                    long millis;
+                    if (currentDevice.getLastQueryData() == null) {
+                        millis = 0L;
+                    } else {
+                        millis = currentDevice.getLastQueryData().getLastUpdate().getTime();
+                    }
+                    long sysMillis = System.currentTimeMillis();
+                    if (sysMillis-millis > 5 * 60 * 1000){
+                        swipeRefreshLayout.setRefreshing(true);
+                        doQuery(true);
+                    }
+
                 }
                 // refresh options menu
                 supportInvalidateOptionsMenu();
