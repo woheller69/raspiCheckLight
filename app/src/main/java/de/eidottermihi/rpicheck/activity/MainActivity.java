@@ -214,7 +214,13 @@ public class MainActivity extends InjectionAppCompatActivity implements
         isOnBackground = false;
         if (currentDevice != null) {
             if (currentDevice.getLastQueryData() != null){
-                long millis = currentDevice.getLastQueryData().getLastUpdate().getTime();
+                long millis;
+                if (currentDevice.getLastQueryData().getLastUpdate() == null) {
+                    millis = 0L;
+                } else {
+                    millis = currentDevice.getLastQueryData().getLastUpdate().getTime();
+                }
+
                 long sysMillis = System.currentTimeMillis();
                 if (sysMillis-millis > 5 * 60 * 1000){
                     swipeRefreshLayout.setRefreshing(true);
@@ -905,7 +911,7 @@ public class MainActivity extends InjectionAppCompatActivity implements
                 if (currentDevice != null) {
                     currentDevice.setSpinnerPosition(itemPosition);
                     long millis;
-                    if (currentDevice.getLastQueryData() == null) {
+                    if (currentDevice.getLastQueryData() == null || currentDevice.getLastQueryData().getLastUpdate() == null) {
                         millis = 0L;
                     } else {
                         millis = currentDevice.getLastQueryData().getLastUpdate().getTime();
@@ -1022,6 +1028,8 @@ public class MainActivity extends InjectionAppCompatActivity implements
         super.onActivityResult(requestCode, resultCode, intent);
         switch (requestCode) {
             case EditRaspiActivity.REQUEST_EDIT:
+                currentDevice.setLastQueryData(null);  //delete data of modified device
+                currentDevice = null; //set currentDevice null, so it will be selected by the spinner
                 initSpinner();
                 break;
             default:
